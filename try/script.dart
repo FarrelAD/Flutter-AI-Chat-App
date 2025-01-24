@@ -12,12 +12,7 @@ void main() async {
   };
 
   final body = jsonEncode({
-    "inputs": [
-      {
-        "role": "user",
-        "content": "What is the capital of France?"
-      }
-    ],
+    "inputs": "What is the capital of France?",
     "parameters": {
       "max_tokens": 500
     },
@@ -33,7 +28,6 @@ void main() async {
 
     final responseStream = await request.send();
 
-    // Process the streamed response
     final responseChunks = responseStream.stream.transform(utf8.decoder);
     await for (var chunk in responseChunks) {
       print(chunk);
