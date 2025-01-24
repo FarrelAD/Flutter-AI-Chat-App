@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_ai_chat/AIModelHelper.dart';
+import 'package:flutter/material.dart';
 
 void main() async {
-	await dotenv.load(fileName: ".env");
+	await dotenv.load();
 	runApp(const MyApp());
 }
 
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
 	Widget build(BuildContext context) {
 		return MaterialApp(
 			debugShowCheckedModeBanner: false,
-			title: 'AI Chat App',
+			title: 'Chat App',
 			home: const ChatHomePage(),
 		);
 	}
@@ -31,24 +32,59 @@ class _ChatHomePageState extends State<ChatHomePage> {
 	final List<Map<String, String>> _messages = [];
 	final TextEditingController _controller = TextEditingController();
 
-	void _sendMessage(String text) async {
-		processChat("What is the capital of France?");
-
-
-
+	void _sendMessage(String text) {
 		setState(() {
 			_messages.add({'user': text});
 		});
 
-		Future.delayed(const Duration(seconds: 1), () {
+		// Call AI API for the response
+		_getAIResponse(text).then((response) {
 			setState(() {
-				_messages.add({'ai': _getAIResponse(text)});
+				_messages.add({'ai': response});
 			});
 		});
 	}
 
-	String _getAIResponse(String userMessage) {
-		return 'This is a response to "$userMessage"';
+	Future<String> _getAIResponse(String userMessage) async {
+		final apiKey = dotenv.get("HUGGINGFACE_API_KEY");
+		final model = "google/gemma-2-2b-it";
+		final url = "https://api-inference.huggingface.co/models/$model";
+
+		final headers = {
+			"Authorization": "Bearer $apiKey",
+			"Content-Type": "application/json"
+		};
+
+		final body = jsonEncode({
+			"inputs": userMessage,
+			"parameters": {
+				"max_tokens": 500
+			},
+			"options": {
+				"stream": false
+			}
+		});
+
+		try {
+			final response = await http.post(
+				Uri.parse(url),
+				headers: headers,
+				body: body,
+			);
+
+			if (response.statusCode == 200) {
+				final responseData = jsonDecode(response.body);
+				if (responseData is List && responseData.isNotEmpty) {
+					return responseData[0]["generated_text"] ?? "No response";
+				} else {
+					return "Invalid response format";
+				}
+			} else {
+				return "Error: ${response.statusCode}";
+			}
+		} catch (e) {
+			return "Error: $e";
+		}
 	}
 
 	@override
