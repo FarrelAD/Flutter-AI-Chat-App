@@ -15,14 +15,21 @@ class _ChatHomePageState extends State<ChatHomePage> {
   void _sendMessage(String text) {
     setState(() {
       _messages.add({'user': text});
+      _messages.add({'ai': ''});
     });
 
-    AIService.getAIResponse(text).then((response) {
+    final aiIndex = _messages.length - 1;
+    AIService.getAIResponseStream(text).listen((chunk) {
       setState(() {
-        _messages.add({'ai': response});
+        _messages[aiIndex]['ai'] = _messages[aiIndex]['ai']! + chunk;
+      });
+    }, onError: (error) {
+      setState(() {
+        _messages[aiIndex]['ai'] = "Error: $error";
       });
     });
   }
+
 
   @override
   Widget build(BuildContext context) {

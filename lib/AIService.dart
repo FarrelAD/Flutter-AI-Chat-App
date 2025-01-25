@@ -3,41 +3,51 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AIService {
-  static Future<String> getAIResponse(String userMessage) async {
+  static Stream<String> getAIResponseStream(String userMessage) async* {
     final apiKey = dotenv.get("HUGGINGFACE_API_KEY");
     final model = "google/gemma-2-2b-it";
     final url = "https://api-inference.huggingface.co/models/$model";
 
+
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
+      final request = http.Request("POST", Uri.parse(url))
+        ..headers.addAll({
           "Authorization": "Bearer $apiKey",
           "Content-Type": "application/json"
-        },
-        body: jsonEncode({
+        })
+        ..body = jsonEncode({
           "inputs": userMessage,
           "parameters": {
             "max_tokens": 500
           },
           "options": {
-            "stream": false
+            "stream": true
           }
-        }),
-      );
+        });
 
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        if (responseData is List && responseData.isNotEmpty) {
-          return responseData[0]["generated_text"] ?? "No response";
-        } else {
-          return "Invalid response format";
+
+      final responseStream = await request.send();
+
+      final responseChunks = responseStream.stream.transform(utf8.decoder);
+      await for (var chunk in responseChunks) {
+        try {
+          final data = jsonDecode(chunk);
+
+          if (data is List && data.isNotEmpty) {
+            for (var item in data) {
+              if (item is Map && item.containsKey("generated_text")) {
+                yield item["generated_text"];
+              }
+            }
+          } else {
+            yield "Unexpected data format: $chunk";
+          }
+        } catch (e) {
+          yield "Error parsing chunk: $chunk";
         }
-      } else {
-        return "Error: ${response.statusCode}";
       }
     } catch (e) {
-      return "Error: $e";
+      yield "Error: $e";
     }
   }
 }
