@@ -8,26 +8,22 @@ class AIService {
     final model = "google/gemma-2-2b-it";
     final url = "https://api-inference.huggingface.co/models/$model";
 
-    final headers = {
-      "Authorization": "Bearer $apiKey",
-      "Content-Type": "application/json"
-    };
-
-    final body = jsonEncode({
-      "inputs": userMessage,
-      "parameters": {
-        "max_tokens": 500
-      },
-      "options": {
-        "stream": false
-      }
-    });
-
     try {
       final response = await http.post(
         Uri.parse(url),
-        headers: headers,
-        body: body,
+        headers: {
+          "Authorization": "Bearer $apiKey",
+          "Content-Type": "application/json"
+        },
+        body: jsonEncode({
+          "inputs": userMessage,
+          "parameters": {
+            "max_tokens": 500
+          },
+          "options": {
+            "stream": false
+          }
+        }),
       );
 
       if (response.statusCode == 200) {
