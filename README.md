@@ -1,6 +1,6 @@
 # flutter_ai_chat
 
-This project demonstrates how to integrate the AI model [`google/gemma-2-2b-it`](https://huggingface.co/google/gemma-2-2b-it) from Hugging Face into a Flutter mobile application. The app functions as a chatbot, allowing users to ask questions and receive AI-generated responses. The AI model is accessed through HTTP requests using the Hugging Face Inference API, and the responses are displayed in markdown format within the app.
+This project demonstrates how to integrate the AI model [`google/gemma-2-2b-it`](https://huggingface.co/google/gemma-2-2b-it) from Hugging Face into a Flutter application. The app functions as a chatbot, allowing users to ask questions and receive AI-generated responses. The AI model is accessed through HTTP requests using the Hugging Face Inference API, and the responses are displayed in markdown format within the app.
 
 ## Getting Started
 
