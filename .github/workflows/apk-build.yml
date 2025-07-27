@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       flutter-version: ${{ steps.set-flutter-version.outputs.version }}
+
     steps:
       - name: Checkout the code
         uses: actions/checkout@v3
@@ -28,9 +29,16 @@ jobs:
       - name: Replace API key from GitHub Secrets
         run: sed -i "s|your_api_key|${{ secrets.HUGGINGFACE_API_KEY }}|g" .env
 
+      - name: Upload .env file
+        uses: actions/upload-artifact@v4
+        with:
+          name: env-file
+          path: .env
+
   install_deps:
     runs-on: ubuntu-latest
     needs: prepare
+
     steps:
       - name: Checkout the code
         uses: actions/checkout@v3
@@ -40,6 +48,14 @@ jobs:
         with:
           flutter-version: '3.32.5'
           cache: true
+
+      - name: Download .env file
+        uses: actions/download-artifact@v4
+        with:
+          name: env-file
+
+      - name: Move .env to root
+        run: mv env-file/.env .env
 
       - name: Install dependencies
         run: flutter pub get
@@ -47,6 +63,7 @@ jobs:
   build_apk:
     runs-on: ubuntu-latest
     needs: install_deps
+
     steps:
       - name: Checkout the code
         uses: actions/checkout@v3
@@ -56,6 +73,14 @@ jobs:
         with:
           flutter-version: '3.32.5'
           cache: true
+
+      - name: Download .env file
+        uses: actions/download-artifact@v4
+        with:
+          name: env-file
+
+      - name: Move .env to root
+        run: mv env-file/.env .env
 
       - name: Build APK
         run: flutter build apk --release
