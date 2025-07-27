@@ -1,0 +1,36 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'
+          cache: true
+
+      - name: Copy .env.example to .env
+        run: cp .env.example .env
+
+      - name: Replace API key from GitHub Secrets
+        run: sed -i '' "s|your_api_key|${{ secrets.HUGGINGFACE_API_KEY }}|g" .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS
+        run: flutter build ios --release
+
+      - name: Upload iOS build folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/ios/iphoneos/
