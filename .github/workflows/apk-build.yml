@@ -4,12 +4,17 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
-
+    outputs:
+      flutter-version: ${{ steps.set-flutter-version.outputs.version }}
     steps:
       - name: Checkout the code
         uses: actions/checkout@v3
+
+      - name: Set Flutter version
+        id: set-flutter-version
+        run: echo "version=3.32.5" >> $GITHUB_OUTPUT
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -23,8 +28,34 @@ jobs:
       - name: Replace API key from GitHub Secrets
         run: sed -i "s|your_api_key|${{ secrets.HUGGINGFACE_API_KEY }}|g" .env
 
+  install_deps:
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'
+          cache: true
+
       - name: Install dependencies
         run: flutter pub get
+
+  build_apk:
+    runs-on: ubuntu-latest
+    needs: install_deps
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'
+          cache: true
 
       - name: Build APK
         run: flutter build apk --release
