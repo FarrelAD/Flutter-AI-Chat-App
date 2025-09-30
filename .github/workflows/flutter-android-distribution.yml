@@ -75,7 +75,7 @@ jobs:
       with:
         appId: ${{ secrets.FIREBASE_APP_ID }}
         serviceCredentialsFileContent: ${{ secrets.CREDENTIAL_FILE_CONTENT }}
-        groups: testers
+        groups: ""          # ganti dengan nama grup tester yang kalian miliki
         file: build/app/outputs/flutter-apk/app-release.apk
         releaseNotes: |
           Changes in this build:
