@@ -60,12 +60,6 @@ jobs:
         ls -la .env
         echo "Full path: $(pwd)/.env"
 
-    - name: Upload .env file
-      uses: actions/upload-artifact@v4
-      with:
-        name: env-file
-        path: ${{ github.workspace }}/.env
-        
     - name: Bump Flutter build version
       run: |
         # Extract current version (format: x.y.z+build)
@@ -95,9 +89,6 @@ jobs:
       
     - name: Build APK
       run: flutter build apk --release
-      
-    - name: Build App Bundle
-      run: flutter build appbundle --release
       
     - name: Upload APK to Firebase App Distribution
       uses: wzieba/Firebase-Distribution-Github-Action@v1
