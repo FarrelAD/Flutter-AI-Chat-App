@@ -13,7 +13,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+      with:
+        fetch-depth: 0   # ensure we can push back commits
+
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
@@ -61,6 +63,30 @@ jobs:
         name: env-file
         path: ${{ github.workspace }}/.env
         
+    - name: Bump Flutter build version
+      run: |
+        # Extract current version (format: x.y.z+build)
+        current_version=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+        version_name=$(echo $current_version | cut -d+ -f1)
+        build_number=$(echo $current_version | cut -d+ -f2)
+
+        # Increment build number
+        new_build_number=$((build_number + 1))
+        new_version="$version_name+$new_build_number"
+
+        # Replace in pubspec.yaml
+        sed -i "s/version: .*/version: $new_version/" pubspec.yaml
+
+        echo "Updated version to $new_version"
+
+    - name: Commit updated version
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add pubspec.yaml
+        git commit -m "chore: bump version [skip ci]" || echo "No changes to commit"
+        git push origin HEAD:${{ github.ref }}
+
     - name: Get dependencies
       run: flutter pub get
       
@@ -75,7 +101,7 @@ jobs:
       with:
         appId: ${{ secrets.FIREBASE_APP_ID }}
         serviceCredentialsFileContent: ${{ secrets.CREDENTIAL_FILE_CONTENT }}
-        groups: ""          # ganti dengan nama grup tester yang kalian miliki
+        groups: ""
         file: build/app/outputs/flutter-apk/app-release.apk
         releaseNotes: |
           Changes in this build:
